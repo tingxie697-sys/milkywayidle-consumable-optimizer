@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [银河奶牛]回血回蓝计算器
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  计算补给品的搭配性价比，找出最佳回血/回蓝组合。支持左买(买入价)、右买(卖出价)和平均价格的性价比分析，可自定义最低恢复量需求。
 // @author       银河奶牛
 // @license      CC-BY-NC-SA-4.0
@@ -16,7 +16,7 @@
 // ==/UserScript==
 
 /*
-[银河奶牛]回血回蓝计算器 v1.0.2
+[银河奶牛]回血回蓝计算器 v1.0.3
 
 功能说明：
 1. 支持回蓝(MP)和回血(HP)两种类型的补给品计算
@@ -775,7 +775,11 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
             // 成本分析 section (nth-child(3))
             const analysisContent = panel.querySelector('.optimizer-body .optimizer-section:nth-child(3) .collapse-content');
 
-            const generateBarSection = (items, typeName, color) => {
+            // 获取推荐搭配中的物品名称
+            const recommendedHP = best ? new Set(best.hpItems.map(i => i.name)) : new Set();
+            const recommendedMP = best ? new Set(best.mpItems.map(i => i.name)) : new Set();
+
+            const generateBarSection = (items, typeName, color, recommendedNames) => {
                 const valid = items.filter(i => i.performance !== Infinity && i.performance > 0);
                 if (valid.length === 0) return `<h5 style="color:${color};margin:10px 0 6px">${typeName}</h5><div class="loading">无数据</div>`;
                 const sorted = [...valid].sort((a, b) => a.performance - b.performance);
@@ -783,15 +787,15 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                 const maxP = sorted[sorted.length - 1].performance;
                 const range = maxP - minP || 1;
 
-                const rows = sorted.map((item, idx) => {
+                const rows = sorted.map((item) => {
                     const pct = ((item.performance - minP) / range) * 100;
-                    const barColor = idx === 0 ? color : `rgba(${color === '#66BB6A' ? '76,175,80' : '33,150,243'},${0.3 + (pct / 100) * 0.5})`;
-                    const isBest = idx === 0;
+                    const isRecommended = recommendedNames.has(item.name);
+                    const barColor = isRecommended ? color : `rgba(${color === '#66BB6A' ? '76,175,80' : '33,150,243'},${0.3 + (pct / 100) * 0.5})`;
                     return `
-                        <div style="margin:4px 0;${isBest ? 'font-weight:600;' : ''}">
+                        <div style="margin:4px 0;${isRecommended ? 'font-weight:600;' : ''}">
                             <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
-                                <span style="color:${isBest ? '#EF5350' : '#aaa'}">${isBest ? '★ ' : ''}${item.name}</span>
-                                <span style="color:${isBest ? '#EF5350' : '#888'};${isBest ? 'font-weight:700;' : ''}">${item.performance.toFixed(2)} 金/点</span>
+                                <span style="color:${isRecommended ? '#EF5350' : '#aaa'}">${isRecommended ? '★ ' : ''}${item.name}</span>
+                                <span style="color:${isRecommended ? '#EF5350' : '#888'};${isRecommended ? 'font-weight:700;' : ''}">${item.performance.toFixed(2)} 金/点</span>
                             </div>
                             <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:6px;overflow:hidden">
                                 <div style="width:${Math.max(pct, 2)}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.3s"></div>
@@ -799,15 +803,20 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                         </div>`;
                 }).join('');
 
+                const recommendedItems = sorted.filter(i => recommendedNames.has(i.name));
+                const summaryStr = recommendedItems.length > 0
+                    ? `推荐 ${recommendedItems.map(i => `${i.name} ${i.performance.toFixed(2)}`).join('、')} 金/点`
+                    : `最优 ${sorted[0].performance.toFixed(2)} 金/点`;
+
                 return `
-                    <h5 style="color:${color};margin:10px 0 6px;font-size:12px">${typeName} <span style="color:#EF5350;font-weight:700">· 最优 ${sorted[0].performance.toFixed(2)} 金/点</span></h5>
+                    <h5 style="color:${color};margin:10px 0 6px;font-size:12px">${typeName} <span style="color:#EF5350;font-weight:700">· ${summaryStr}</span></h5>
                     ${rows}`;
             };
 
             analysisContent.innerHTML = `
-                <div style="font-size:11px;color:#666;margin-bottom:8px">按平均性价比排序（左买+右买均值），越短越优</div>
-                ${generateBarSection(allItems.hp, '回血(HP)', '#66BB6A')}
-                ${generateBarSection(allItems.mp, '回蓝(MP)', '#42A5F5')}
+                <div style="font-size:11px;color:#666;margin-bottom:8px">按平均性价比排序（左买+右买均值），★ 为当前推荐搭配</div>
+                ${generateBarSection(allItems.hp, '回血(HP)', '#66BB6A', recommendedHP)}
+                ${generateBarSection(allItems.mp, '回蓝(MP)', '#42A5F5', recommendedMP)}
             `;
 
             // 市场价格 section (nth-child(4))
