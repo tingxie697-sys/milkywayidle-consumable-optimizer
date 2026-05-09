@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         [银河奶牛]补给品组合计算器
+// @name         [银河奶牛]回血回蓝计算器
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.0
 // @description  计算补给品的搭配性价比，找出最佳回血/回蓝组合。支持左买(买入价)、右买(卖出价)和平均价格的性价比分析，可自定义最低恢复量需求。
 // @author       银河奶牛
 // @license      CC-BY-NC-SA-4.0
@@ -10,14 +10,11 @@
 // @match        https://www.milkywayidlecn.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @require      https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.js
 // @run-at       document-end
 // ==/UserScript==
 
 /*
-[银河奶牛]补给品组合计算器 v1.3
+[银河奶牛]回血回蓝计算器 v1.0
 
 功能说明：
 1. 支持回蓝(MP)和回血(HP)两种类型的补给品计算
@@ -32,17 +29,11 @@
 - 回血(HP)：甜甜圈系列、蛋糕系列
 
 使用方法：
-1. 选择恢复类型（回蓝/回血）
-2. 输入最低恢复量需求
-3. 点击"更新市场数据"按钮获取最新价格
-4. 查看最佳搭配建议
+1. 输入最低回血(HP)和回蓝(MP)需求
+2. 点击"更新市场数据"按钮获取最新价格
+3. 查看最佳搭配建议
 
-版本历史：
-v1.0 - 初始版本，支持回蓝物品计算
-v1.1 - 添加左买/右买计算，支持最低回蓝量设置
-v1.2 - 添加回血物品计算，优化界面显示
-
-GitHub仓库：https://github.com/1635781232/
+GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimizer
 */
 
 (() => {
@@ -352,7 +343,7 @@ GitHub仓库：https://github.com/1635781232/
         panel.className = 'consumable-optimizer';
         panel.innerHTML = `
             <div class="panel-header">
-                <h3>[银河奶牛]补给品组合计算器</h3>
+                <h3>[银河奶牛]回血回蓝计算器</h3>
                 <div class="panel-controls">
                     <button class="panel-btn minimize-btn" title="最小化">−</button>
                 </div>
@@ -455,39 +446,21 @@ GitHub仓库：https://github.com/1635781232/
     // 获取市场数据
     function fetchMarketData() {
         return new Promise((resolve, reject) => {
-            console.log('[MWIConsumableOptimizer] 开始获取市场数据');
-            console.log('[MWIConsumableOptimizer] API URL:', MARKET_API_URL);
-            
-            // 兼容不同的GM_xmlhttpRequest实现
             const sendRequest = typeof GM.xmlHttpRequest === "function" ? GM.xmlHttpRequest : typeof GM_xmlhttpRequest === "function" ? GM_xmlhttpRequest : null;
-            
-            console.log('[MWIConsumableOptimizer] GM.xmlHttpRequest:', typeof GM.xmlHttpRequest);
-            console.log('[MWIConsumableOptimizer] GM_xmlhttpRequest:', typeof GM_xmlhttpRequest);
-            console.log('[MWIConsumableOptimizer] sendRequest:', typeof sendRequest);
-            
+
             if (!sendRequest) {
                 reject(new Error('无法发送HTTP请求'));
                 return;
             }
-            
+
             sendRequest({
                 method: 'GET',
                 url: MARKET_API_URL,
                 timeout: 5000,
                 onload: function(response) {
-                    console.log('[MWIConsumableOptimizer] 收到响应');
-                    console.log('[MWIConsumableOptimizer] 响应状态:', response.status);
-                    console.log('[MWIConsumableOptimizer] 响应文本长度:', response.responseText?.length);
-                    
                     try {
                         if (response.status === 200) {
                             const data = JSON.parse(response.responseText);
-                            console.log('[MWIConsumableOptimizer] 解析后的数据结构:', Object.keys(data));
-                            console.log('[MWIConsumableOptimizer] marketData存在?', !!data.marketData);
-                            if (data.marketData) {
-                                console.log('[MWIConsumableOptimizer] marketData中的物品数量:', Object.keys(data.marketData).length);
-                                console.log('[MWIConsumableOptimizer] marketData前5个物品:', Object.keys(data.marketData).slice(0, 5));
-                            }
                             marketData = data;
                             lastUpdateTime = Date.now();
                             resolve(data);
@@ -495,16 +468,13 @@ GitHub仓库：https://github.com/1635781232/
                             reject(new Error(`HTTP错误: ${response.status}`));
                         }
                     } catch (e) {
-                        console.error('[MWIConsumableOptimizer] 解析响应失败:', e);
                         reject(e);
                     }
                 },
                 onerror: function() {
-                    console.error('[MWIConsumableOptimizer] 网络错误');
                     reject(new Error('网络错误'));
                 },
                 ontimeout: function() {
-                    console.error('[MWIConsumableOptimizer] 请求超时');
                     reject(new Error('请求超时'));
                 }
             });
@@ -512,80 +482,38 @@ GitHub仓库：https://github.com/1635781232/
     }
 
     // 获取物品价格详情
-    // 根据 MWITools 和 mooket 的代码，市场数据格式为:
-    // response.marketData[itemHrid][0] = { a: ask(卖出价/右买), b: bid(买入价/左买) }
+    // marketData[itemHrid][0] = { a: ask(卖出价/右买), b: bid(买入价/左买) }
     function getItemPriceDetails(itemHrid) {
-        if (!marketData) {
-            console.log('[MWIConsumableOptimizer] getItemPriceDetails: marketData为空');
-            return null;
-        }
-        
+        if (!marketData) return null;
+
         let bidPrice = null;  // 买入价 (左买)
         let askPrice = null;  // 卖出价 (右买)
-        
-        // API 返回的数据结构是 { marketData: { "/items/xxx": [{ a: ask, b: bid }] } }
+
         const marketDataObj = marketData.marketData || marketData;
-        
-        console.log('[MWIConsumableOptimizer] getItemPriceDetails:', itemHrid);
-        console.log('[MWIConsumableOptimizer] marketData存在?', !!marketData);
-        console.log('[MWIConsumableOptimizer] marketData.marketData存在?', !!marketData.marketData);
-        console.log('[MWIConsumableOptimizer] marketDataObj存在?', !!marketDataObj);
-        console.log('[MWIConsumableOptimizer] 查询的itemHrid:', itemHrid);
-        console.log('[MWIConsumableOptimizer] itemHrid在marketDataObj中?', !!marketDataObj[itemHrid]);
-        
-        // 处理 MWITools/mooket 格式的 marketData
-        // 格式: marketData[itemHrid][0] = { a: ask, b: bid }
+
         if (typeof marketDataObj === 'object' && marketDataObj[itemHrid]) {
             const itemData = marketDataObj[itemHrid];
-            console.log('[MWIConsumableOptimizer] 找到itemData:', typeof itemData);
-            
+
             if (Array.isArray(itemData) && itemData.length > 0) {
-                // 格式: marketData[itemHrid][0] = { a: ask, b: bid }
-                console.log('[MWIConsumableOptimizer] itemData是数组，长度:', itemData.length);
-                console.log('[MWIConsumableOptimizer] itemData[0]:', itemData[0]);
                 askPrice = itemData[0].a;
                 bidPrice = itemData[0].b;
             } else if (typeof itemData === 'object') {
-                // 可能是对象格式 { 0: { a: ask, b: bid } }
-                console.log('[MWIConsumableOptimizer] itemData是对象');
-                console.log('[MWIConsumableOptimizer] itemData内容:', itemData);
-                console.log('[MWIConsumableOptimizer] itemData[0]:', itemData[0]);
-                console.log('[MWIConsumableOptimizer] itemData[0].a:', itemData[0]?.a);
-                console.log('[MWIConsumableOptimizer] itemData[0].b:', itemData[0]?.b);
-                
-                // 尝试从 itemData[0] 获取价格
                 if (itemData[0] && typeof itemData[0] === 'object') {
                     askPrice = itemData[0].a;
                     bidPrice = itemData[0].b;
                 } else {
-                    // 回退到直接属性
                     askPrice = itemData.ask || itemData.a;
                     bidPrice = itemData.bid || itemData.b;
                 }
             }
-        } else {
-            console.log('[MWIConsumableOptimizer] 未找到itemHrid对应的数据');
         }
-        
-        // 确保有有效值（只使用实际获取到的价格，不互相填充）
+
         const hasValidBid = bidPrice !== null && bidPrice !== undefined && !isNaN(bidPrice) && bidPrice > 0;
         const hasValidAsk = askPrice !== null && askPrice !== undefined && !isNaN(askPrice) && askPrice > 0;
-        
-        console.log('[MWIConsumableOptimizer] 价格有效性 - bid:', hasValidBid, 'ask:', hasValidAsk);
-        
-        // 如果两个价格都无效，返回null表示获取失败
-        if (!hasValidBid && !hasValidAsk) {
-            console.log('[MWIConsumableOptimizer] 无法获取有效价格');
-            return null;
-        }
-        
-        // 使用有效价格，无效的保持为null
-        const finalBidPrice = hasValidBid ? bidPrice : null;
-        const finalAskPrice = hasValidAsk ? askPrice : null;
-        
-        console.log('[MWIConsumableOptimizer] 最终价格 - bid:', finalBidPrice, 'ask:', finalAskPrice);
-        
-        return { bidPrice: finalBidPrice, askPrice: finalAskPrice };
+
+        if (!hasValidBid && !hasValidAsk) return null;
+
+        return { bidPrice: hasValidBid ? bidPrice : null, askPrice: hasValidAsk ? askPrice : null };
     }
     
     // 获取物品价格（兼容旧代码）
