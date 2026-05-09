@@ -41,6 +41,8 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
 (() => {
     "use strict";
 
+    const SCRIPT_VERSION = '1.0.5';
+
     // 恢复能力数据
     const restoreData = {
         // MP恢复物品
@@ -345,7 +347,7 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
         panel.className = 'consumable-optimizer';
         panel.innerHTML = `
             <div class="panel-header">
-                <h3>[银河奶牛]回血回蓝计算器</h3>
+                <h3>[银河奶牛]回血回蓝计算器 v${SCRIPT_VERSION}</h3>
                 <div class="panel-controls">
                     <button class="panel-btn minimize-btn" title="最小化">−</button>
                 </div>
