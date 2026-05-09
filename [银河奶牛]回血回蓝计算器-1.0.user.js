@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [银河奶牛]回血回蓝计算器
 // @namespace    http://tampermonkey.net/
-// @version      1.0.4
+// @version      1.0.5
 // @description  计算补给品的搭配性价比，找出最佳回血/回蓝组合。支持左买(买入价)、右买(卖出价)和平均价格的性价比分析，可自定义最低恢复量需求。
 // @author       银河奶牛
 // @license      CC-BY-NC-SA-4.0
@@ -16,7 +16,7 @@
 // ==/UserScript==
 
 /*
-[银河奶牛]回血回蓝计算器 v1.0.4
+[银河奶牛]回血回蓝计算器 v1.0.5
 
 功能说明：
 1. 支持回蓝(MP)和回血(HP)两种类型的补给品计算
@@ -686,6 +686,9 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
         for (const { hpSlots, mpSlots } of allocations) {
             const hpBest = calcBestComboStrategy(hpItems, donutNames, cakeNames, hpSlots, minHP);
             const mpBest = calcBestComboStrategy(mpItems, gummyNames, yogurtNames, mpSlots, minMP);
+            // 有最低需求但格数不够满足的，跳过
+            if (minHP > 0 && !hpBest) continue;
+            if (minMP > 0 && !mpBest) continue;
             const hpCost = hpBest ? hpBest.hourlyCost : 0;
             const mpCost = mpBest ? mpBest.hourlyCost : 0;
             if (hpCost === Infinity || mpCost === Infinity) continue;
