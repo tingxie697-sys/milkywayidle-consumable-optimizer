@@ -590,8 +590,8 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
     function findBestAllocation(allItems, minHP, minMP) {
         if (minHP <= 0 && minMP <= 0) return null;
 
-        const hpItems = allItems.hp.map(i => ({ name: i.name, restore: i.restore, cost: i.bidPrice || i.askPrice })).filter(i => i.cost > 0);
-        const mpItems = allItems.mp.map(i => ({ name: i.name, restore: i.restore, cost: i.bidPrice || i.askPrice })).filter(i => i.cost > 0);
+        const hpItems = allItems.hp.map(i => ({ hrid: i.hrid, name: i.name, restore: i.restore, cost: i.bidPrice || i.askPrice })).filter(i => i.cost > 0);
+        const mpItems = allItems.mp.map(i => ({ hrid: i.hrid, name: i.name, restore: i.restore, cost: i.bidPrice || i.askPrice })).filter(i => i.cost > 0);
         if (hpItems.length === 0 && mpItems.length === 0) return null;
 
         // 计算最优食用策略：按性价比排序，优先吃满高效的
@@ -625,8 +625,8 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
             if (k <= 0) return [{ totalRestore: 0, totalCost: 0, items: [] }];
             if (k === 1) return items.map(i => ({ totalRestore: i.restore, totalCost: i.cost, items: [i] }));
             // k === 2: 必须从两个不同类别各选一个
-            const itemsA = items.filter(i => categoryA.includes(i.name));
-            const itemsB = items.filter(i => categoryB.includes(i.name));
+            const itemsA = items.filter(i => categoryA.includes(i.hrid));
+            const itemsB = items.filter(i => categoryB.includes(i.hrid));
             const result = [];
             for (const a of itemsA) {
                 for (const b of itemsB) {
