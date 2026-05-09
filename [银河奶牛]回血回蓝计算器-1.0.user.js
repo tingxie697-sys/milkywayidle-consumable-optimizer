@@ -618,28 +618,29 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
             return best;
         }
 
-        // 筛选唯一食物组合（同种食物不重复）
-        function generateUniqueCombos(items, k) {
-            if (k === 0) return [{ totalRestore: 0, totalCost: 0, items: [] }];
+        // 生成指定格数的食物组合（2格时必须不同类型：甜甜圈+蛋糕 或 软糖+酸奶）
+        function generateCategoryCombos(items, categoryA, categoryB, k) {
+            if (k <= 0) return [{ totalRestore: 0, totalCost: 0, items: [] }];
             if (k === 1) return items.map(i => ({ totalRestore: i.restore, totalCost: i.cost, items: [i] }));
+            // k === 2: 必须从两个不同类别各选一个
+            const itemsA = items.filter(i => categoryA.includes(i.name));
+            const itemsB = items.filter(i => categoryB.includes(i.name));
             const result = [];
-            for (let i = 0; i < items.length; i++) {
-                const rest = items.filter((_, idx) => idx !== i);
-                const subCombos = generateUniqueCombos(rest, k - 1);
-                for (const sub of subCombos) {
+            for (const a of itemsA) {
+                for (const b of itemsB) {
                     result.push({
-                        totalRestore: items[i].restore + sub.totalRestore,
-                        totalCost: items[i].cost + sub.totalCost,
-                        items: [items[i], ...sub.items]
+                        totalRestore: a.restore + b.restore,
+                        totalCost: a.cost + b.cost,
+                        items: [a, b]
                     });
                 }
             }
             return result;
         }
 
-        function calcBestUniqueStrategy(items, k, minRestore) {
+        function calcBestComboStrategy(items, categoryA, categoryB, k, minRestore) {
             if (k <= 0 || minRestore <= 0) return { hourlyCost: 0, items: [], strategy: [] };
-            const combos = generateUniqueCombos(items, k);
+            const combos = generateCategoryCombos(items, categoryA, categoryB, k);
             let best = null;
             for (const combo of combos) {
                 if (combo.totalRestore < minRestore) continue;
@@ -661,11 +662,16 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
             return best;
         }
 
+        const donutNames = ['donut','blueberry_donut','blackberry_donut','strawberry_donut','mooberry_donut','marsberry_donut','spaceberry_donut'];
+        const cakeNames = ['cupcake','blueberry_cake','blackberry_cake','strawberry_cake','mooberry_cake','marsberry_cake','spaceberry_cake'];
+        const gummyNames = ['gummy','apple_gummy','orange_gummy','plum_gummy','peach_gummy','dragon_fruit_gummy','star_fruit_gummy'];
+        const yogurtNames = ['yogurt','apple_yogurt','orange_yogurt','plum_yogurt','peach_yogurt','dragon_fruit_yogurt','star_fruit_yogurt'];
+
         let bestTotalHourly = Infinity, bestResult = null;
         for (let hpSlots = 1; hpSlots <= 2; hpSlots++) {
             const mpSlots = 3 - hpSlots;
-            const hpBest = calcBestUniqueStrategy(hpItems, hpSlots, minHP);
-            const mpBest = calcBestUniqueStrategy(mpItems, mpSlots, minMP);
+            const hpBest = calcBestComboStrategy(hpItems, donutNames, cakeNames, hpSlots, minHP);
+            const mpBest = calcBestComboStrategy(mpItems, gummyNames, yogurtNames, mpSlots, minMP);
             if (!hpBest || !mpBest) continue;
             if (hpBest.hourlyCost === Infinity || mpBest.hourlyCost === Infinity) continue;
             const total = hpBest.hourlyCost + mpBest.hourlyCost;
@@ -782,8 +788,8 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                     return `
                         <div style="margin:4px 0;${isBest ? 'font-weight:600;' : ''}">
                             <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
-                                <span style="color:${isBest ? '#fff' : '#aaa'}">${isBest ? '★ ' : ''}${item.name}</span>
-                                <span style="color:${isBest ? color : '#888'}">${item.performance.toFixed(2)} 金/点</span>
+                                <span style="color:${isBest ? '#EF5350' : '#aaa'}">${isBest ? '★ ' : ''}${item.name}</span>
+                                <span style="color:${isBest ? '#EF5350' : '#888'};${isBest ? 'font-weight:700;' : ''}">${item.performance.toFixed(2)} 金/点</span>
                             </div>
                             <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:6px;overflow:hidden">
                                 <div style="width:${Math.max(pct, 2)}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.3s"></div>
@@ -792,7 +798,7 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                 }).join('');
 
                 return `
-                    <h5 style="color:${color};margin:10px 0 6px;font-size:12px">${typeName} <span style="color:#666;font-weight:normal">· 最优 ${sorted[0].performance.toFixed(2)} 金/点</span></h5>
+                    <h5 style="color:${color};margin:10px 0 6px;font-size:12px">${typeName} <span style="color:#EF5350;font-weight:700">· 最优 ${sorted[0].performance.toFixed(2)} 金/点</span></h5>
                     ${rows}`;
             };
 
