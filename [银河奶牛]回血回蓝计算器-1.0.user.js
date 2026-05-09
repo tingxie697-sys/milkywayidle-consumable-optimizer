@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [银河奶牛]回血回蓝计算器
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.0.1
 // @description  计算补给品的搭配性价比，找出最佳回血/回蓝组合。支持左买(买入价)、右买(卖出价)和平均价格的性价比分析，可自定义最低恢复量需求。
 // @author       银河奶牛
 // @license      CC-BY-NC-SA-4.0
@@ -10,11 +10,13 @@
 // @match        https://www.milkywayidlecn.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
+// @updateURL    https://raw.githubusercontent.com/tingxie697-sys/milkywayidle-consumable-optimizer/master/%5B%E9%93%B6%E6%B2%B3%E5%A5%B6%E7%89%9B%5D%E5%9B%9E%E8%A1%80%E5%9B%9E%E8%93%9D%E8%AE%A1%E7%AE%97%E5%99%A8-1.0.user.js
+// @downloadURL  https://raw.githubusercontent.com/tingxie697-sys/milkywayidle-consumable-optimizer/master/%5B%E9%93%B6%E6%B2%B3%E5%A5%B6%E7%89%9B%5D%E5%9B%9E%E8%A1%80%E5%9B%9E%E8%93%9D%E8%AE%A1%E7%AE%97%E5%99%A8-1.0.user.js
 // @run-at       document-end
 // ==/UserScript==
 
 /*
-[银河奶牛]回血回蓝计算器 v1.0
+[银河奶牛]回血回蓝计算器 v1.0.1
 
 功能说明：
 1. 支持回蓝(MP)和回血(HP)两种类型的补给品计算
