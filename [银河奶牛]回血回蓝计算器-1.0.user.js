@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [银河奶牛]回血回蓝计算器
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  计算补给品的搭配性价比，找出最佳回血/回蓝组合。支持左买(买入价)、右买(卖出价)和平均价格的性价比分析，可自定义最低恢复量需求。
 // @author       银河奶牛
 // @license      CC-BY-NC-SA-4.0
@@ -16,7 +16,7 @@
 // ==/UserScript==
 
 /*
-[银河奶牛]回血回蓝计算器 v1.0.1
+[银河奶牛]回血回蓝计算器 v1.0.2
 
 功能说明：
 1. 支持回蓝(MP)和回血(HP)两种类型的补给品计算
