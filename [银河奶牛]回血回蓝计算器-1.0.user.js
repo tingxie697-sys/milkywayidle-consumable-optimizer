@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [银河奶牛]回血回蓝计算器
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.4
 // @description  计算补给品的搭配性价比，找出最佳回血/回蓝组合。支持左买(买入价)、右买(卖出价)和平均价格的性价比分析，可自定义最低恢复量需求。
 // @author       银河奶牛
 // @license      CC-BY-NC-SA-4.0
@@ -16,7 +16,7 @@
 // ==/UserScript==
 
 /*
-[银河奶牛]回血回蓝计算器 v1.0.3
+[银河奶牛]回血回蓝计算器 v1.0.4
 
 功能说明：
 1. 支持回蓝(MP)和回血(HP)两种类型的补给品计算
@@ -670,19 +670,32 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
         const yogurtNames = ['yogurt','apple_yogurt','orange_yogurt','plum_yogurt','peach_yogurt','dragon_fruit_yogurt','star_fruit_yogurt'];
 
         let bestTotalHourly = Infinity, bestResult = null;
-        for (let hpSlots = 1; hpSlots <= 2; hpSlots++) {
-            const mpSlots = 3 - hpSlots;
+
+        const allocations = [];
+        if (minHP > 0 && minMP > 0) {
+            allocations.push({ hpSlots: 1, mpSlots: 2 });
+            allocations.push({ hpSlots: 2, mpSlots: 1 });
+        } else if (minHP > 0) {
+            allocations.push({ hpSlots: 1, mpSlots: 0 });
+            allocations.push({ hpSlots: 2, mpSlots: 0 });
+        } else if (minMP > 0) {
+            allocations.push({ hpSlots: 0, mpSlots: 1 });
+            allocations.push({ hpSlots: 0, mpSlots: 2 });
+        }
+
+        for (const { hpSlots, mpSlots } of allocations) {
             const hpBest = calcBestComboStrategy(hpItems, donutNames, cakeNames, hpSlots, minHP);
             const mpBest = calcBestComboStrategy(mpItems, gummyNames, yogurtNames, mpSlots, minMP);
-            if (!hpBest || !mpBest) continue;
-            if (hpBest.hourlyCost === Infinity || mpBest.hourlyCost === Infinity) continue;
-            const total = hpBest.hourlyCost + mpBest.hourlyCost;
+            const hpCost = hpBest ? hpBest.hourlyCost : 0;
+            const mpCost = mpBest ? mpBest.hourlyCost : 0;
+            if (hpCost === Infinity || mpCost === Infinity) continue;
+            const total = hpCost + mpCost;
             if (total < bestTotalHourly) {
                 bestTotalHourly = total;
                 bestResult = {
-                    hpStrategy: hpBest.strategy, hpItems: hpBest.items, hpRestore: hpBest.totalRestore, hpCost: hpBest.totalCost, hpHourlyCost: hpBest.hourlyCost, hpSlots,
-                    mpStrategy: mpBest.strategy, mpItems: mpBest.items, mpRestore: mpBest.totalRestore, mpCost: mpBest.totalCost, mpHourlyCost: mpBest.hourlyCost, mpSlots,
-                    totalHourlyCost: total, totalSlots: 3
+                    hpStrategy: hpBest ? hpBest.strategy : [], hpItems: hpBest ? hpBest.items : [], hpRestore: hpBest ? hpBest.totalRestore : 0, hpCost: hpBest ? hpBest.totalCost : 0, hpHourlyCost: hpCost, hpSlots,
+                    mpStrategy: mpBest ? mpBest.strategy : [], mpItems: mpBest ? mpBest.items : [], mpRestore: mpBest ? mpBest.totalRestore : 0, mpCost: mpBest ? mpBest.totalCost : 0, mpHourlyCost: mpCost, mpSlots,
+                    totalHourlyCost: total, totalSlots: hpSlots + mpSlots
                 };
             }
         }
@@ -738,8 +751,7 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                     return `<div class="item-row"><span class="item-name">${i.name}${tag}</span><span class="item-value">回蓝${i.restore}/个</span><span class="item-value">${i.rate.toFixed(2)}个/min</span></div>`;
                 }).join('');
 
-                comboSection.innerHTML = `
-                    <h4>最佳搭配（共 ${best.totalSlots}/3 格）</h4>
+                const hpSection = best.hpSlots > 0 ? `
                     <div class="combo-group highlight-left">
                         <h5>回血(HP) - ${best.hpSlots} 格</h5>
                         <div class="best-combo">
@@ -750,7 +762,8 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                             <div class="item-row"><span class="item-name">每天成本</span><span class="item-value">${fmtNum(best.hpHourlyCost * 24)}</span></div>
                             <div class="item-row"><span class="item-name">成本/血</span><span class="item-value">${hpPerPoint}</span></div>
                         </div>
-                    </div>
+                    </div>` : '';
+                const mpSection = best.mpSlots > 0 ? `
                     <div class="combo-group highlight-right">
                         <h5>回蓝(MP) - ${best.mpSlots} 格</h5>
                         <div class="best-combo">
@@ -761,7 +774,12 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                             <div class="item-row"><span class="item-name">每天成本</span><span class="item-value">${fmtNum(best.mpHourlyCost * 24)}</span></div>
                             <div class="item-row"><span class="item-name">成本/蓝</span><span class="item-value">${mpPerPoint}</span></div>
                         </div>
-                    </div>
+                    </div>` : '';
+
+                comboSection.innerHTML = `
+                    <h4>最佳搭配（共 ${best.totalSlots}/3 格）</h4>
+                    ${hpSection}
+                    ${mpSection}
                     <div class="combo-group highlight-avg">
                         <h5>合计</h5>
                         <div class="best-combo">
