@@ -36,6 +36,7 @@
 3. 查看最佳搭配建议
 
 GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimizer
+联系方式：游戏内联系 ferryboat
 */
 
 (() => {
