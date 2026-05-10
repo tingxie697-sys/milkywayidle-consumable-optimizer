@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [银河奶牛]回血回蓝计算器
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.1.1
 // @description  计算补给品的搭配性价比，找出最佳回血/回蓝组合。支持左买(买入价)、右买(卖出价)和平均价格的性价比分析，可自定义最低恢复量需求。
 // @author       银河奶牛
 // @license      CC-BY-NC-SA-4.0
@@ -16,7 +16,7 @@
 // ==/UserScript==
 
 /*
-[银河奶牛]回血回蓝计算器 v1.1.0
+[银河奶牛]回血回蓝计算器 v1.1.1
 
 功能说明：
 1. 支持回蓝(MP)和回血(HP)两种类型的补给品计算
@@ -41,7 +41,7 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
 (() => {
     "use strict";
 
-    const SCRIPT_VERSION = '1.1.0';
+    const SCRIPT_VERSION = '1.1.1';
 
     // 恢复能力数据
     const restoreData = {
@@ -285,8 +285,20 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
         .restore-input { -moz-appearance: textfield; }
 
         /* 最佳搭配卡片 */
-        .combo-card { padding: 0; overflow: hidden; }
-        .combo-card .opt-card-title { padding: 14px 14px 0; margin-bottom: 10px; }
+        .combo-card {
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .combo-card .opt-card-title { padding: 14px 14px 0; margin-bottom: 10px; flex-shrink: 0; }
+        .combo-card-scroll {
+            max-height: 340px;
+            overflow-y: auto;
+        }
+        .combo-card-scroll::-webkit-scrollbar { width: 4px; }
+        .combo-card-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+        .combo-card-scroll::-webkit-scrollbar-track { background: transparent; }
         .combo-type-section {
             padding: 12px 14px;
             border-top: 1px solid rgba(255,255,255,0.04);
@@ -954,15 +966,17 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
 
                 comboSection.innerHTML = `
                     <div class="opt-card-title">最佳搭配（${best.totalSlots}/3 格）</div>
-                    ${hpSection}
-                    ${mpSection}
-                    <div class="combo-total-section">
-                        <div class="combo-type-header">
-                            <span class="combo-type-badge">💰 合计</span>
-                        </div>
-                        <div class="combo-summary">
-                            <div class="combo-summary-item"><div class="combo-summary-label">每小时总成本</div><div class="combo-summary-value">${fmtNum(best.totalHourlyCost)}</div></div>
-                            <div class="combo-summary-item"><div class="combo-summary-label">每天总成本</div><div class="combo-summary-value">${fmtNum(best.totalHourlyCost * 24)}</div></div>
+                    <div class="combo-card-scroll">
+                        ${hpSection}
+                        ${mpSection}
+                        <div class="combo-total-section">
+                            <div class="combo-type-header">
+                                <span class="combo-type-badge">💰 合计</span>
+                            </div>
+                            <div class="combo-summary">
+                                <div class="combo-summary-item"><div class="combo-summary-label">每小时总成本</div><div class="combo-summary-value">${fmtNum(best.totalHourlyCost)}</div></div>
+                                <div class="combo-summary-item"><div class="combo-summary-label">每天总成本</div><div class="combo-summary-value">${fmtNum(best.totalHourlyCost * 24)}</div></div>
+                            </div>
                         </div>
                     </div>
                 `;
