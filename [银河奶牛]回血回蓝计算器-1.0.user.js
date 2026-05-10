@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [银河奶牛]回血回蓝计算器
 // @namespace    http://tampermonkey.net/
-// @version      1.0.5
+// @version      1.1.0
 // @description  计算补给品的搭配性价比，找出最佳回血/回蓝组合。支持左买(买入价)、右买(卖出价)和平均价格的性价比分析，可自定义最低恢复量需求。
 // @author       银河奶牛
 // @license      CC-BY-NC-SA-4.0
@@ -16,7 +16,7 @@
 // ==/UserScript==
 
 /*
-[银河奶牛]回血回蓝计算器 v1.0.5
+[银河奶牛]回血回蓝计算器 v1.1.0
 
 功能说明：
 1. 支持回蓝(MP)和回血(HP)两种类型的补给品计算
@@ -41,7 +41,7 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
 (() => {
     "use strict";
 
-    const SCRIPT_VERSION = '1.0.5';
+    const SCRIPT_VERSION = '1.1.0';
 
     // 恢复能力数据
     const restoreData = {
@@ -137,39 +137,37 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
             position: fixed;
             top: 50px;
             right: 20px;
-            width: 420px;
-            min-width: 300px;
+            width: 440px;
+            min-width: 320px;
             max-height: 90vh;
-            background: linear-gradient(135deg, rgba(20,20,30,0.95), rgba(30,30,45,0.95));
-            color: #e0e0e0;
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
+            background: rgba(16,18,24,0.97);
+            color: #d0d0d8;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
             z-index: 9999;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: -apple-system, 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             resize: both;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
         }
         .consumable-optimizer.minimized {
-            width: 40px !important;
-            height: 40px !important;
-            min-width: 40px;
-            min-height: 40px;
+            width: 44px !important;
+            height: 44px !important;
+            min-width: 44px;
+            min-height: 44px;
             resize: none;
             border-radius: 50%;
             cursor: pointer;
             overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
         }
         .consumable-optimizer.minimized .optimizer-body,
-        .consumable-optimizer.minimized .panel-header {
-            display: none;
-        }
+        .consumable-optimizer.minimized .panel-header { display: none; }
         .consumable-optimizer.minimized::after {
             content: '🐄';
-            font-size: 20px;
+            font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -180,165 +178,322 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 14px;
-            background: linear-gradient(90deg, rgba(76,175,80,0.15), rgba(33,150,243,0.1));
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(76,175,80,0.12), rgba(33,150,243,0.08));
             cursor: move;
             user-select: none;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .panel-header h3 {
             margin: 0;
-            color: #81C784;
+            color: #a5d6a7;
             font-size: 13px;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
-        .panel-controls {
-            display: flex;
-            gap: 6px;
-        }
+        .panel-controls { display: flex; gap: 6px; }
         .panel-btn {
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255,255,255,0.06);
-            color: #aaa;
+            background: rgba(255,255,255,0.05);
+            color: #888;
             transition: all 0.15s;
         }
-        .panel-btn:hover {
-            background: rgba(255,255,255,0.15);
-            color: #fff;
-        }
-        .panel-btn.minimize-btn:hover {
-            background: rgba(255,193,7,0.3);
-            color: #FFD54F;
-        }
+        .panel-btn:hover { background: rgba(255,255,255,0.12); color: #ccc; }
+        .panel-btn.minimize-btn:hover { background: rgba(255,193,7,0.25); color: #FFD54F; }
+
         .optimizer-body {
-            padding: 12px 14px;
+            padding: 14px 16px;
             overflow-y: auto;
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
         .optimizer-body::-webkit-scrollbar { width: 4px; }
-        .optimizer-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
-        .consumable-optimizer h4 {
-            margin: 0 0 10px;
-            color: #81C784;
+        .optimizer-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        /* 卡片基础样式 */
+        .opt-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .opt-card-title {
+            margin: 0 0 12px;
+            color: #a5d6a7;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* 输入区域 */
+        .input-card { display: flex; gap: 12px; }
+        .input-field {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .input-field label {
+            color: #888;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .input-field .input-icon-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 0 10px;
+            transition: border-color 0.2s;
+        }
+        .input-field .input-icon-row:focus-within {
+            border-color: rgba(76,175,80,0.4);
+            background: rgba(255,255,255,0.06);
+        }
+        .input-field .input-icon {
+            font-size: 16px;
+            line-height: 1;
+        }
+        .restore-input {
+            width: 100%;
+            padding: 10px 0;
+            background: transparent;
+            border: none;
+            color: #e0e0e8;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            outline: none;
+        }
+        .restore-input::placeholder { color: #444; font-weight: 400; }
+        .restore-input::-webkit-inner-spin-button,
+        .restore-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .restore-input { -moz-appearance: textfield; }
+
+        /* 最佳搭配卡片 */
+        .combo-card { padding: 0; overflow: hidden; }
+        .combo-card .opt-card-title { padding: 14px 14px 0; margin-bottom: 10px; }
+        .combo-type-section {
+            padding: 12px 14px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .combo-type-section:first-of-type { border-top: none; }
+        .combo-type-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .combo-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .combo-type-badge.hp { background: rgba(76,175,80,0.15); color: #81C784; }
+        .combo-type-badge.mp { background: rgba(33,150,243,0.15); color: #64B5F6; }
+        .combo-type-slots {
+            color: #666;
+            font-size: 11px;
+        }
+        .food-cards {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .food-card {
+            flex: 1;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .food-card.recommended {
+            border-color: rgba(239,83,80,0.3);
+            background: rgba(239,83,80,0.05);
+        }
+        .food-card-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ccc;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .food-card.recommended .food-card-name { color: #EF5350; }
+        .food-card-name .star { color: #EF5350; font-size: 10px; margin-right: 2px; }
+        .food-card-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .food-card-stat {
+            font-size: 11px;
+            color: #777;
+        }
+        .food-card-stat span { color: #aaa; font-weight: 500; }
+        .combo-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .combo-summary-item {
+            text-align: center;
+        }
+        .combo-summary-label {
+            font-size: 10px;
+            color: #555;
+            margin-bottom: 2px;
+        }
+        .combo-summary-value {
             font-size: 13px;
             font-weight: 600;
-        }
-        .consumable-optimizer h5 {
-            margin: 5px 0;
             color: #bbb;
-            font-size: 12px;
-            font-weight: 600;
         }
-        .optimizer-section {
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+
+        /* 合计区域 */
+        .combo-total-section {
+            padding: 12px 14px;
+            background: rgba(255,193,7,0.04);
+            border-top: 1px solid rgba(255,255,255,0.04);
         }
-        .optimizer-section:last-child { border-bottom: none; }
-        .item-row {
-            display: grid;
-            grid-template-columns: 100px 100px 100px;
-            gap: 8px;
-            padding: 3px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            font-size: 12px;
+        .combo-total-section .combo-type-badge {
+            background: rgba(255,193,7,0.15);
+            color: #FFD54F;
         }
-        .item-row:last-child { border-bottom: none; }
-        .item-name { font-weight: 500; color: #999; }
-        .item-value { text-align: right; color: #e0e0e0; }
-        .best-combo .item-row { grid-template-columns: 100px 1fr; }
+
+        /* 折叠区 */
         .collapsible .collapse-header {
             cursor: pointer;
             user-select: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 2px 0;
+            padding: 0;
+            margin: 0;
+            transition: color 0.15s;
         }
-        .collapsible .collapse-header:hover { color: #81C784; }
+        .collapsible .collapse-header:hover { color: #a5d6a7; }
         .collapsible .collapse-icon {
             font-size: 10px;
-            transition: transform 0.2s;
-            color: #666;
+            transition: transform 0.25s ease;
+            color: #555;
         }
         .collapsible.collapsed .collapse-icon { transform: rotate(-90deg); }
         .collapsible .collapse-content {
             max-height: 2000px;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.35s ease-out, opacity 0.25s;
+            opacity: 1;
         }
-        .collapsible.collapsed .collapse-content { max-height: 0; }
-        .combo-group {
-            margin-bottom: 8px;
-            padding: 8px 10px;
+        .collapsible.collapsed .collapse-content { max-height: 0; opacity: 0; }
+
+        /* 性价比进度条 */
+        .perf-row {
+            margin: 6px 0;
+            padding: 6px 8px;
             border-radius: 8px;
+            transition: background 0.15s;
         }
-        .combo-group.highlight-left {
-            background: rgba(76,175,80,0.1);
-            border-left: 3px solid #66BB6A;
-        }
-        .combo-group.highlight-right {
-            background: rgba(33,150,243,0.1);
-            border-left: 3px solid #42A5F5;
-        }
-        .combo-group.highlight-avg {
-            background: rgba(255,193,7,0.1);
-            border-left: 3px solid #FFD54F;
-        }
-        .best-combo { background: transparent; padding: 4px 0; }
-        .update-btn {
-            width: 100%;
-            padding: 7px;
-            background: linear-gradient(90deg, #43A047, #2E7D32);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 8px;
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            transition: all 0.15s;
-        }
-        .update-btn:hover { background: linear-gradient(90deg, #4CAF50, #388E3C); transform: translateY(-1px); }
-        .loading { text-align: center; color: #666; padding: 10px; font-size: 12px; }
-        .restore-input-group {
+        .perf-row:hover { background: rgba(255,255,255,0.03); }
+        .perf-row.recommended { background: rgba(239,83,80,0.04); }
+        .perf-label {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            font-size: 11px;
+            margin-bottom: 4px;
         }
-        .restore-input-group label { color: #999; font-size: 12px; }
-        .input-pair {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .perf-label .perf-name { color: #888; }
+        .perf-label .perf-name.rec { color: #EF5350; font-weight: 600; }
+        .perf-label .perf-value { color: #666; }
+        .perf-label .perf-value.rec { color: #EF5350; font-weight: 700; }
+        .perf-bar-bg {
+            background: rgba(255,255,255,0.04);
+            border-radius: 4px;
+            height: 5px;
+            overflow: hidden;
         }
-        .restore-input {
-            width: 100px;
-            padding: 5px 8px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            color: #e0e0e0;
-            font-size: 12px;
+        .perf-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        /* 市场价格表格 */
+        .price-table { width: 100%; border-collapse: collapse; }
+        .price-table th {
+            font-size: 10px;
+            color: #555;
+            font-weight: 500;
+            text-align: right;
+            padding: 4px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .price-table th:first-child { text-align: left; }
+        .price-table td {
+            font-size: 11px;
+            padding: 5px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
             text-align: right;
         }
-        .restore-input:focus {
-            outline: none;
-            border-color: rgba(76,175,80,0.5);
-            background: rgba(255,255,255,0.1);
+        .price-table td:first-child { text-align: left; color: #999; font-weight: 500; }
+        .price-table tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+        .price-table tr:hover td { background: rgba(255,255,255,0.04); }
+        .price-buy { color: #66BB6A; }
+        .price-sell { color: #EF5350; }
+        .price-restore { color: #666; }
+
+        /* 按钮 */
+        .update-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #43A047, #2E7D32);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(76,175,80,0.2);
         }
-        .restore-input::placeholder { color: #555; }
+        .update-btn:hover {
+            background: linear-gradient(135deg, #4CAF50, #388E3C);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76,175,80,0.3);
+        }
+        .update-btn:active { transform: translateY(0); }
+        .update-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading { text-align: center; color: #555; padding: 12px; font-size: 12px; }
+        .error-msg { color: #EF5350; font-size: 12px; }
     `);
 
     // 创建优化器面板
@@ -353,30 +508,34 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                 </div>
             </div>
             <div class="optimizer-body">
-                <div class="optimizer-section">
-                    <div class="restore-input-group">
-                        <div class="input-pair">
-                            <label>最低回血(HP)：</label>
-                            <input type="number" id="min-hp-input" class="restore-input" value="0" min="0" placeholder="HP">
+                <div class="opt-card input-card">
+                    <div class="input-field">
+                        <label>最低回血 HP</label>
+                        <div class="input-icon-row">
+                            <span class="input-icon">❤️</span>
+                            <input type="number" id="min-hp-input" class="restore-input" value="0" min="0" placeholder="0">
                         </div>
-                        <div class="input-pair">
-                            <label>最低回蓝(MP)：</label>
-                            <input type="number" id="min-mp-input" class="restore-input" value="550" min="0" placeholder="MP">
+                    </div>
+                    <div class="input-field">
+                        <label>最低回蓝 MP</label>
+                        <div class="input-icon-row">
+                            <span class="input-icon">💧</span>
+                            <input type="number" id="min-mp-input" class="restore-input" value="550" min="0" placeholder="0">
                         </div>
                     </div>
                 </div>
-                <div class="optimizer-section">
-                    <h4>最佳搭配</h4>
+                <div class="opt-card combo-card" id="combo-section">
+                    <div class="opt-card-title">最佳搭配</div>
                     <div class="loading">加载中...</div>
                 </div>
-                <div class="optimizer-section collapsible collapsed">
-                    <h4 class="collapse-header">每点成本分析 <span class="collapse-icon">▼</span></h4>
+                <div class="opt-card collapsible collapsed" id="analysis-section">
+                    <div class="opt-card-title collapse-header">每点成本分析 <span class="collapse-icon">▼</span></div>
                     <div class="collapse-content">
                         <div class="loading">加载中...</div>
                     </div>
                 </div>
-                <div class="optimizer-section collapsible collapsed">
-                    <h4 class="collapse-header">市场价格 <span class="collapse-icon">▼</span></h4>
+                <div class="opt-card collapsible collapsed" id="price-section">
+                    <div class="opt-card-title collapse-header">市场价格 <span class="collapse-icon">▼</span></div>
                     <div class="collapse-content">
                         <div class="loading">加载中...</div>
                     </div>
@@ -727,11 +886,9 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
 
             const best = findBestAllocation(allItems, minHP, minMP);
 
-            // 最佳搭配 section (nth-child(2))
-            const comboSection = panel.querySelector('.optimizer-body .optimizer-section:nth-child(2)');
+            const comboSection = panel.querySelector('#combo-section');
 
             if (!best) {
-                // 检查哪些需求无法满足
                 const maxHP1 = allItems.hp.length > 0 ? Math.max(...allItems.hp.map(i => i.restore)) : 0;
                 const maxHP2 = allItems.hp.length >= 2 ? maxHP1 + Math.max(...allItems.hp.filter(i => i.restore < maxHP1).map(i => i.restore), 0) : maxHP1;
                 const maxMP1 = allItems.mp.length > 0 ? Math.max(...allItems.mp.map(i => i.restore)) : 0;
@@ -743,68 +900,83 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
                 else if (hpImpossible) reason = `回血需求 ${minHP} 超出最大恢复 ${maxHP2}（2格）`;
                 else if (mpImpossible) reason = `回蓝需求 ${minMP} 超出最大恢复 ${maxMP2}（2格）`;
                 else reason = '请设置最低恢复量（HP或MP至少一项 > 0）';
-                comboSection.innerHTML = `<h4>最佳搭配（3格）</h4><div class="loading" style="color:#F44336">无法实现：${reason}</div>`;
+                comboSection.innerHTML = `<div class="opt-card-title">最佳搭配（3格）</div><div class="loading error-msg">无法实现：${reason}</div>`;
             } else {
+                const buildFoodCards = (strategy, type) => {
+                    return strategy.map((i, idx) => {
+                        const rec = idx === 0 ? ' recommended' : '';
+                        const star = idx === 0 ? '<span class="star">★</span>' : '';
+                        const typeLabel = type === 'hp' ? '回血' : '回蓝';
+                        return `<div class="food-card${rec}">
+                            <div class="food-card-name">${star}${i.name}</div>
+                            <div class="food-card-stats">
+                                <div class="food-card-stat">${typeLabel} <span>${i.restore}</span>/个</div>
+                                <div class="food-card-stat">速率 <span>${i.rate.toFixed(2)}</span>个/min</div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                };
+
+                const buildSummary = (slots, restore, cost, hourlyCost, perPoint, perPointLabel) => {
+                    if (slots <= 0) return '';
+                    return `
+                        <div class="combo-summary">
+                            <div class="combo-summary-item"><div class="combo-summary-label">总${perPointLabel}</div><div class="combo-summary-value">${restore}</div></div>
+                            <div class="combo-summary-item"><div class="combo-summary-label">食物成本</div><div class="combo-summary-value">${fmtNum(cost)}</div></div>
+                            <div class="combo-summary-item"><div class="combo-summary-label">每小时</div><div class="combo-summary-value">${fmtNum(hourlyCost)}</div></div>
+                            <div class="combo-summary-item"><div class="combo-summary-label">每天</div><div class="combo-summary-value">${fmtNum(hourlyCost * 24)}</div></div>
+                            <div class="combo-summary-item"><div class="combo-summary-label">成本/${perPointLabel}</div><div class="combo-summary-value">${perPoint}</div></div>
+                        </div>`;
+                };
+
                 const hpPerPoint = best.hpRestore > 0 ? (best.hpCost / best.hpRestore).toFixed(4) : '-';
                 const mpPerPoint = best.mpRestore > 0 ? (best.mpCost / best.mpRestore).toFixed(4) : '-';
-                const hpFoodRows = best.hpStrategy.map((i, idx) => {
-                    const tag = idx === 0 ? ' ★优先' : '';
-                    return `<div class="item-row"><span class="item-name">${i.name}${tag}</span><span class="item-value">回血${i.restore}/个</span><span class="item-value">${i.rate.toFixed(2)}个/min</span></div>`;
-                }).join('');
-                const mpFoodRows = best.mpStrategy.map((i, idx) => {
-                    const tag = idx === 0 ? ' ★优先' : '';
-                    return `<div class="item-row"><span class="item-name">${i.name}${tag}</span><span class="item-value">回蓝${i.restore}/个</span><span class="item-value">${i.rate.toFixed(2)}个/min</span></div>`;
-                }).join('');
 
                 const hpSection = best.hpSlots > 0 ? `
-                    <div class="combo-group highlight-left">
-                        <h5>回血(HP) - ${best.hpSlots} 格</h5>
-                        <div class="best-combo">
-                            ${hpFoodRows}
-                            <div class="item-row"><span class="item-name">总回血</span><span class="item-value">${best.hpRestore}</span></div>
-                            <div class="item-row"><span class="item-name">食物成本</span><span class="item-value">${fmtNum(best.hpCost)}</span></div>
-                            <div class="item-row"><span class="item-name">每小时成本</span><span class="item-value">${fmtNum(best.hpHourlyCost)}</span></div>
-                            <div class="item-row"><span class="item-name">每天成本</span><span class="item-value">${fmtNum(best.hpHourlyCost * 24)}</span></div>
-                            <div class="item-row"><span class="item-name">成本/血</span><span class="item-value">${hpPerPoint}</span></div>
+                    <div class="combo-type-section">
+                        <div class="combo-type-header">
+                            <span class="combo-type-badge hp">❤️ 回血 HP</span>
+                            <span class="combo-type-slots">${best.hpSlots} 格</span>
                         </div>
+                        <div class="food-cards">${buildFoodCards(best.hpStrategy, 'hp')}</div>
+                        ${buildSummary(best.hpSlots, best.hpRestore, best.hpCost, best.hpHourlyCost, hpPerPoint, '血')}
                     </div>` : '';
+
                 const mpSection = best.mpSlots > 0 ? `
-                    <div class="combo-group highlight-right">
-                        <h5>回蓝(MP) - ${best.mpSlots} 格</h5>
-                        <div class="best-combo">
-                            ${mpFoodRows}
-                            <div class="item-row"><span class="item-name">总回蓝</span><span class="item-value">${best.mpRestore}</span></div>
-                            <div class="item-row"><span class="item-name">食物成本</span><span class="item-value">${fmtNum(best.mpCost)}</span></div>
-                            <div class="item-row"><span class="item-name">每小时成本</span><span class="item-value">${fmtNum(best.mpHourlyCost)}</span></div>
-                            <div class="item-row"><span class="item-name">每天成本</span><span class="item-value">${fmtNum(best.mpHourlyCost * 24)}</span></div>
-                            <div class="item-row"><span class="item-name">成本/蓝</span><span class="item-value">${mpPerPoint}</span></div>
+                    <div class="combo-type-section">
+                        <div class="combo-type-header">
+                            <span class="combo-type-badge mp">💧 回蓝 MP</span>
+                            <span class="combo-type-slots">${best.mpSlots} 格</span>
                         </div>
+                        <div class="food-cards">${buildFoodCards(best.mpStrategy, 'mp')}</div>
+                        ${buildSummary(best.mpSlots, best.mpRestore, best.mpCost, best.mpHourlyCost, mpPerPoint, '蓝')}
                     </div>` : '';
 
                 comboSection.innerHTML = `
-                    <h4>最佳搭配（共 ${best.totalSlots}/3 格）</h4>
+                    <div class="opt-card-title">最佳搭配（${best.totalSlots}/3 格）</div>
                     ${hpSection}
                     ${mpSection}
-                    <div class="combo-group highlight-avg">
-                        <h5>合计</h5>
-                        <div class="best-combo">
-                            <div class="item-row"><span class="item-name">每小时总成本</span><span class="item-value">${fmtNum(best.totalHourlyCost)}</span></div>
-                            <div class="item-row"><span class="item-name">每天总成本</span><span class="item-value">${fmtNum(best.totalHourlyCost * 24)}</span></div>
+                    <div class="combo-total-section">
+                        <div class="combo-type-header">
+                            <span class="combo-type-badge">💰 合计</span>
+                        </div>
+                        <div class="combo-summary">
+                            <div class="combo-summary-item"><div class="combo-summary-label">每小时总成本</div><div class="combo-summary-value">${fmtNum(best.totalHourlyCost)}</div></div>
+                            <div class="combo-summary-item"><div class="combo-summary-label">每天总成本</div><div class="combo-summary-value">${fmtNum(best.totalHourlyCost * 24)}</div></div>
                         </div>
                     </div>
                 `;
             }
 
-            // 成本分析 section (nth-child(3))
-            const analysisContent = panel.querySelector('.optimizer-body .optimizer-section:nth-child(3) .collapse-content');
+            // 成本分析 section
+            const analysisContent = panel.querySelector('#analysis-section .collapse-content');
 
-            // 获取推荐搭配中的物品名称
             const recommendedHP = best ? new Set(best.hpItems.map(i => i.name)) : new Set();
             const recommendedMP = best ? new Set(best.mpItems.map(i => i.name)) : new Set();
 
             const generateBarSection = (items, typeName, color, recommendedNames) => {
                 const valid = items.filter(i => i.performance !== Infinity && i.performance > 0);
-                if (valid.length === 0) return `<h5 style="color:${color};margin:10px 0 6px">${typeName}</h5><div class="loading">无数据</div>`;
+                if (valid.length === 0) return `<div style="color:${color};font-size:12px;font-weight:600;margin:10px 0 6px">${typeName}</div><div class="loading">无数据</div>`;
                 const sorted = [...valid].sort((a, b) => a.performance - b.performance);
                 const minP = sorted[0].performance;
                 const maxP = sorted[sorted.length - 1].performance;
@@ -812,57 +984,54 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
 
                 const rows = sorted.map((item) => {
                     const pct = ((item.performance - minP) / range) * 100;
-                    const isRecommended = recommendedNames.has(item.name);
-                    const barColor = isRecommended ? color : `rgba(${color === '#66BB6A' ? '76,175,80' : '33,150,243'},${0.3 + (pct / 100) * 0.5})`;
+                    const isRec = recommendedNames.has(item.name);
+                    const barColor = isRec ? color : `rgba(${color === '#66BB6A' ? '76,175,80' : '33,150,243'},${0.25 + (pct / 100) * 0.4})`;
                     return `
-                        <div style="margin:4px 0;${isRecommended ? 'font-weight:600;' : ''}">
-                            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
-                                <span style="color:${isRecommended ? '#EF5350' : '#aaa'}">${isRecommended ? '★ ' : ''}${item.name}</span>
-                                <span style="color:${isRecommended ? '#EF5350' : '#888'};${isRecommended ? 'font-weight:700;' : ''}">${item.performance.toFixed(2)} 金/点</span>
+                        <div class="perf-row${isRec ? ' recommended' : ''}">
+                            <div class="perf-label">
+                                <span class="perf-name${isRec ? ' rec' : ''}">${isRec ? '★ ' : ''}${item.name}</span>
+                                <span class="perf-value${isRec ? ' rec' : ''}">${item.performance.toFixed(2)} 金/点</span>
                             </div>
-                            <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:6px;overflow:hidden">
-                                <div style="width:${Math.max(pct, 2)}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.3s"></div>
+                            <div class="perf-bar-bg">
+                                <div class="perf-bar-fill" style="width:${Math.max(pct, 2)}%;background:${barColor}"></div>
                             </div>
                         </div>`;
                 }).join('');
 
-                const recommendedItems = sorted.filter(i => recommendedNames.has(i.name));
-                const summaryStr = recommendedItems.length > 0
-                    ? `推荐 ${recommendedItems.map(i => `${i.name} ${i.performance.toFixed(2)}`).join('、')} 金/点`
+                const recItems = sorted.filter(i => recommendedNames.has(i.name));
+                const summary = recItems.length > 0
+                    ? `推荐 ${recItems.map(i => `${i.name} ${i.performance.toFixed(2)}`).join('、')} 金/点`
                     : `最优 ${sorted[0].performance.toFixed(2)} 金/点`;
 
                 return `
-                    <h5 style="color:${color};margin:10px 0 6px;font-size:12px">${typeName} <span style="color:#EF5350;font-weight:700">· ${summaryStr}</span></h5>
+                    <div style="color:${color};font-size:12px;font-weight:600;margin:10px 0 6px">${typeName} <span style="color:#EF5350;font-weight:700;font-size:11px">· ${summary}</span></div>
                     ${rows}`;
             };
 
             analysisContent.innerHTML = `
-                <div style="font-size:11px;color:#666;margin-bottom:8px">按平均性价比排序（左买+右买均值），★ 为当前推荐搭配</div>
+                <div style="font-size:11px;color:#555;margin-bottom:10px">按平均性价比排序（左买+右买均值），★ 为当前推荐搭配</div>
                 ${generateBarSection(allItems.hp, '回血(HP)', '#66BB6A', recommendedHP)}
                 ${generateBarSection(allItems.mp, '回蓝(MP)', '#42A5F5', recommendedMP)}
             `;
 
-            // 市场价格 section (nth-child(4))
-            const priceContent = panel.querySelector('.optimizer-body .optimizer-section:nth-child(4) .collapse-content');
+            // 市场价格 section
+            const priceContent = panel.querySelector('#price-section .collapse-content');
             const generatePriceSection = (items, typeName, color) => {
-                if (items.length === 0) return `<h5 style="color:${color};margin:10px 0 6px">${typeName}</h5><div class="loading">无数据</div>`;
-                const rows = items.map(item => {
-                    const spread = item.bidPrice && item.askPrice ? item.askPrice - item.bidPrice : null;
-                    const spreadStr = spread !== null ? (spread > 0 ? `+${fmtNum(spread)}` : '0') : '-';
-                    return `
-                        <div style="display:grid;grid-template-columns:70px 1fr 1fr 50px;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px;align-items:center">
-                            <span style="color:#aaa;font-weight:500">${item.name}</span>
-                            <span style="text-align:right;color:#66BB6A">${item.bidPrice ? fmtNum(item.bidPrice) : '-'}</span>
-                            <span style="text-align:right;color:#EF5350">${item.askPrice ? fmtNum(item.askPrice) : '-'}</span>
-                            <span style="text-align:right;color:#888">${item.restore}</span>
-                        </div>`;
-                }).join('');
+                if (items.length === 0) return `<div style="color:${color};font-size:12px;font-weight:600;margin:10px 0 6px">${typeName}</div><div class="loading">无数据</div>`;
+                const rows = items.map(item => `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td class="price-buy">${item.bidPrice ? fmtNum(item.bidPrice) : '-'}</td>
+                        <td class="price-sell">${item.askPrice ? fmtNum(item.askPrice) : '-'}</td>
+                        <td class="price-restore">${item.restore}</td>
+                    </tr>`
+                ).join('');
                 return `
-                    <h5 style="color:${color};margin:10px 0 6px;font-size:12px">${typeName}</h5>
-                    <div style="display:grid;grid-template-columns:70px 1fr 1fr 50px;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:10px;color:#666">
-                        <span>物品</span><span style="text-align:right">买入价</span><span style="text-align:right">卖出价</span><span style="text-align:right">恢复</span>
-                    </div>
-                    ${rows}`;
+                    <div style="color:${color};font-size:12px;font-weight:600;margin:10px 0 6px">${typeName}</div>
+                    <table class="price-table">
+                        <thead><tr><th>物品</th><th>买入价</th><th>卖出价</th><th>恢复</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>`;
             };
             priceContent.innerHTML = `
                 ${generatePriceSection(allItems.hp, '回血(HP)', '#66BB6A')}
@@ -871,10 +1040,9 @@ GitHub仓库：https://github.com/tingxie697-sys/milkywayidle-consumable-optimiz
 
         } catch (e) {
             console.error('更新面板错误:', e);
-            const comboSection = panel.querySelector('.optimizer-body .optimizer-section:nth-child(2)');
-            comboSection.innerHTML = `<h4>最佳搭配</h4><div class="loading">无法获取市场数据</div>`;
-            panel.querySelector('.optimizer-body .optimizer-section:nth-child(3) .collapse-content').innerHTML = `<div class="loading">无法获取市场数据</div>`;
-            panel.querySelector('.optimizer-body .optimizer-section:nth-child(4) .collapse-content').innerHTML = `<div class="loading">无法获取市场数据</div>`;
+            panel.querySelector('#combo-section').innerHTML = `<div class="opt-card-title">最佳搭配</div><div class="loading error-msg">无法获取市场数据</div>`;
+            panel.querySelector('#analysis-section .collapse-content').innerHTML = `<div class="loading">无法获取市场数据</div>`;
+            panel.querySelector('#price-section .collapse-content').innerHTML = `<div class="loading">无法获取市场数据</div>`;
         }
     }
 
