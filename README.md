@@ -2,6 +2,13 @@
 
 银河奶牛挂机游戏 (Milky Way Idle) 补给品性价比计算器，帮助玩家找出最佳回血/回蓝食物搭配。
 
+## 安装
+
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
+2. 从 [Greasy Fork](https://greasyfork.org/) 安装：搜索「银河奶牛」或「回血回蓝」
+3. 或直接点击安装：[回血回蓝计算器.user.js](https://raw.githubusercontent.com/tingxie697-sys/milkywayidle-consumable-optimizer/master/%5B%E9%93%B6%E6%B2%B3%E5%A5%B6%E7%89%9B%5D%E5%9B%9E%E8%A1%80%E5%9B%9E%E8%93%9D%E8%AE%A1%E7%AE%97%E5%99%A8-1.0.user.js)
+4. 打开游戏页面，右上角出现计算器面板即安装成功
+
 ## 功能
 
 - 支持回血(HP)和回蓝(MP)两种补给品计算
@@ -9,7 +16,8 @@
 - 3格背包约束下的最优食物分配
 - 2格时自动限制不同类型组合（甜甜圈+蛋糕，软糖+酸奶）
 - 支持纯回血或纯回蓝模式（空出不用的格子）
-- 界面可拖动、最小化
+- 性价比分析高亮当前推荐搭配
+- 卡片式 UI，界面可拖动、最小化
 - 30分钟缓存市场数据，减少API请求
 - Tampermonkey 自动检查更新
 
@@ -21,12 +29,6 @@
 | 回蓝(MP) | 酸奶系列 | 50~350 |
 | 回血(HP) | 甜甜圈系列 | 40~280 |
 | 回血(HP) | 蛋糕系列 | 50~350 |
-
-## 安装
-
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
-2. 点击安装脚本：[回血回蓝计算器.user.js](https://raw.githubusercontent.com/tingxie697-sys/milkywayidle-consumable-optimizer/master/%5B%E9%93%B6%E6%B2%B3%E5%A5%B6%E7%89%9B%5D%E5%9B%9E%E8%A1%80%E5%9B%9E%E8%93%9D%E8%AE%A1%E7%AE%97%E5%99%A8-1.0.user.js)
-3. 打开游戏页面，右上角出现计算器面板即安装成功
 
 ## 使用方法
 
@@ -44,6 +46,8 @@
 
 | 版本 | 更新内容 |
 |------|----------|
+| v1.1.1 | 最佳搭配区域加滚动条，防止内容溢出 |
+| v1.1.0 | 卡片式 UI 重做，优化布局和视觉效果 |
 | v1.0.5 | 修复分配格数不足的bug，面板显示版本号 |
 | v1.0.4 | 支持纯回蓝/纯回血模式 |
 | v1.0.3 | 性价比分析标红改为推荐搭配食物 |
